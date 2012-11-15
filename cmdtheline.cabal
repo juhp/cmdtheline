@@ -71,6 +71,7 @@ Library
                    System.Console.CmdTheLine.ArgVal,
                    System.Console.CmdTheLine.Term,
                    System.Console.CmdTheLine.Util
+                   System.Console.CmdTheLine.GetOpt
 
   other-modules:   System.Console.CmdTheLine.Common,
                    System.Console.CmdTheLine.Err,
