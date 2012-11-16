@@ -17,16 +17,13 @@ optDescrsTerm = fmap catMaybes . sequenceA . map optDescrToTerm
 optDescrToTerm :: OptDescr a -> Term (Maybe a)
 optDescrToTerm (Option shorts longs argDescr descr) =
     case argDescr of
-      NoArg x        -> fmap (just x)    $ value    $ flag $ optInf ""
-      ReqArg to name -> fmap (Just . to) $ required $ arg name
-      OptArg to name -> fmap (Just . to) $ value    $ arg name
+      NoArg x        -> fmap (optional x) $ value $ flag                       $ optInf ""
+      ReqArg to name -> fmap (fmap   to)  $ value $ opt                Nothing $ optInf name
+      OptArg to name -> fmap (Just . to)  $ value $ defaultOpt Nothing Nothing $ optInf name
     where
-      just :: a -> Bool -> Maybe a
-      just x present | present   = Just x
-                     | otherwise = Nothing
-
-      arg :: String -> Arg (Maybe String)
-      arg = opt Nothing . optInf
+      optional :: a -> Bool -> Maybe a
+      optional x present | present   = Just x
+                         | otherwise = Nothing
 
       optInf :: String -> OptInfo
       optInf name = (optInfo options) { optDoc  = descr
