@@ -1,6 +1,6 @@
 language: haskell
 install:
-  - cabal install HUnit test-framework test-framework-hunit transformers-0.3.0.0
+  - cabal install HUnit test-framework test-framework-hunit
   - cabal configure --enable-test
   - cabal update && cabal install
 notifications:
