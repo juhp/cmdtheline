@@ -4,7 +4,7 @@ before_install:
     #- mkdir -p ~/.cabal && cp config ~/.cabal/config && cabal update
 
 install:
-    - cabal install test-framework test-framework-hunit transformers==0.3
+    - cabal install test-framework test-framework-hunit
     - cabal configure $mode
     - cabal build
   #- cabal update && cabal install
