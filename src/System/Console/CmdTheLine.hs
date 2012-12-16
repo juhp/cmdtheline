@@ -32,11 +32,6 @@ import System.Console.CmdTheLine.ArgVal
 import System.Console.CmdTheLine.Err
 import System.Console.CmdTheLine.Util
 
-import Text.PrettyPrint ( Doc )
-
-import Control.Monad    ( join )
-import Control.Monad.Trans.Error ( throwError )
-
 {-$term
 
   CmdTheLine is centered around the 'Term' Applicative Functor.  It allows us

@@ -8,12 +8,11 @@ import System.Console.CmdTheLine.Common
 import qualified System.Console.CmdTheLine.Manpage as Man
 
 import Control.Applicative
-import Control.Arrow       ( first, second )
+import Control.Arrow       ( first )
 
 import Data.Char     ( toUpper, toLower )
 import Data.List     ( intersperse, sort, sortBy, partition )
 import Data.Function ( on )
-import Data.Maybe    ( catMaybes )
 
 import System.IO
 
@@ -60,7 +59,7 @@ synopsis ei = case evalKind ei of
   where
   args = concat . intersperse " " $ map snd args'
     where
-    args' = sortBy revCmp . foldl formatPos [] . snd $ term ei
+    args' = sortBy compare' . foldl formatPos [] . snd $ term ei
 
   formatPos acc ai
     | isOpt ai  = acc
@@ -78,38 +77,40 @@ synopsis ei = case evalKind ei of
       PosN _ _ -> ""
       _        -> "..."
 
-  revCmp ( p, _ ) ( p', _ ) = case ( p', p ) of
-    ( _,             PosAny    ) -> LT
-    ( PosAny,        _         ) -> GT
-    ( PosL  _     _, PosR  _ _ ) -> LT
-    ( PosR  _     _, PosL  _ _ ) -> GT
-    ( p, p' ) -> bifurcate
+  compare' ( p, _ ) ( p', _ ) = case ( p', p ) of
+    ( _,          PosAny    ) -> LT
+    ( PosAny,     _         ) -> GT
+    ( PosL  _  _, PosR  _ _ ) -> LT
+    ( PosR  _  _, PosL  _ _ ) -> GT
+    _ -> comparePos k k'
     where
-    bifurcate
-      | not (getBool p) && not (getBool p') = case ( p, p' ) of
-        ( PosL _ _,  PosN _ _ ) -> if k <= k' then LT else GT
-        ( PosN _ _,  PosL _ _ ) -> if k >= k' then GT else LT
-        ( PosN _ _,  _        ) -> if k <= k' then LT else GT
-        _                       -> if k >= k' then GT else LT
-
+    comparePos
       | getBool p && getBool p' = case ( p, p' ) of
-        ( PosL _ _,  PosN _ _ ) -> if k >= k' then LT else GT
-        ( PosN _ _,  PosL _ _ ) -> if k <= k' then GT else LT
-        ( PosN _ _,  _        ) -> if k >= k' then LT else GT
-        _                       -> if k <= k' then GT else LT
-      where
-      k  = getPos p
-      k' = getPos p'
+        ( PosL _ _, PosN _ _ ) -> flip compare -- if k >= k' then LT else GT
+        ( PosN _ _, PosL _ _ ) -> compare -- if k <= k' then GT else LT
+        ( PosN _ _, _        ) -> flip compare -- if k >= k' then LT else GT
+        _                      -> compare -- if k <= k' then GT else LT
+
+      | otherwise = case ( p, p' ) of
+        ( PosL _ _, PosN _ _ ) -> compare -- if k <= k' then LT else GT
+        ( PosN _ _, PosL _ _ ) -> flip compare -- if k >= k' then GT else LT
+        ( PosN _ _, _        ) -> compare -- if k <= k' then LT else GT
+        _                      -> flip compare -- if k >= k' then GT else LT
+
+    k  = getPos p
+    k' = getPos p'
 
     getPos x = case x of
       PosL  _ pos -> pos
       PosR  _ pos -> pos
       PosN  _ pos -> pos
+      _ -> undefined
 
     getBool x = case x of
       PosL  b _ -> b
       PosR  b _ -> b
       PosN  b _ -> b
+      _ -> undefined
 
 synopsisSection :: EvalInfo -> [ManBlock]
 synopsisSection ei = [ S "SYNOPSIS", P (synopsis ei) ]
@@ -227,6 +228,7 @@ mergeItems items blocks = ( orphans, marked )
       ( toInsert', is' ) = first (map snd) $ partition ((== str) . fst) items
       acc'               = Just sec : marked
       mark'              = str == "DESCRIPTION"
+    transition _ = undefined
 
     marked = if mark then Nothing : acc' else acc'
       where
@@ -240,6 +242,7 @@ text ei = mergeOrphans . mergeItems items . man . fst $ term ei
   cmp   = descCompare `on` fst
   items = sortBy cmp $ cmds ++ args
 
+eiSubst :: EvalInfo -> [( String, String )]
 eiSubst ei =
   [ ( "tname", termName . fst $ term ei )
   , ( "mname", termName . fst $ main ei )

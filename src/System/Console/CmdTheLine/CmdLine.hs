@@ -20,8 +20,6 @@ import qualified System.Console.CmdTheLine.Trie as T
 import qualified Data.Map as M
 
 import Data.List     ( sort )
-import Data.Function ( on )
-
 
 optArg :: CmdLine -> ArgInfo -> [( Int, String, Maybe String )]
 optArg cl ai = case M.lookup ai cl of

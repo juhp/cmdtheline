@@ -29,7 +29,6 @@ import System.Console.CmdTheLine.Common  hiding ( Arg )
 import System.Console.CmdTheLine.CmdLine ( optArg, posArg )
 import System.Console.CmdTheLine.ArgVal  ( ArgVal, pp, parser )
 import qualified System.Console.CmdTheLine.Err  as E
-import qualified System.Console.CmdTheLine.Trie as T
 
 import Control.Applicative
 import Control.Arrow       ( second )
@@ -38,7 +37,7 @@ import Control.Monad.Trans.Error ( throwError )
 
 import Text.PrettyPrint
 
-import Data.List     ( sort, sortBy )
+import Data.List     ( sortBy )
 import Data.Function ( on )
 
 argFail :: Doc -> Err a
@@ -122,6 +121,7 @@ mkInfo names = ArgInfo
 --
 -- It is considered a programming error to provide an empty list of names to
 -- optInfo.
+optInfo :: [String] -> OptInfo
 optInfo [] =
   error "System.Console.CmdTheLine.Arg.optInfo recieved empty list of names."
 optInfo names = OInf (mkInfo names) "" "" "OPTIONS"
@@ -422,6 +422,7 @@ revPosRight = posList . PosR True
 -- Arguments as terms.
 --
 
+absent :: [ArgInfo] -> [ArgInfo]
 absent = map (\ ai -> ai { absence = Absent })
 
 -- | 'value' @arg@ makes @arg@ into a 'Term'.

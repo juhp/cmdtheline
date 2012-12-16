@@ -19,12 +19,10 @@ module System.Console.CmdTheLine.Term
 import System.Console.CmdTheLine.Common
 import System.Console.CmdTheLine.CmdLine ( create )
 import System.Console.CmdTheLine.Arg
-import System.Console.CmdTheLine.ArgVal
 import qualified System.Console.CmdTheLine.Err     as E
 import qualified System.Console.CmdTheLine.Help    as H
 import qualified System.Console.CmdTheLine.Trie    as T
 
-import Control.Applicative hiding ( (<|>), empty )
 import Control.Arrow       ( second )
 import Control.Monad       ( join, (<=<) )
 
@@ -38,7 +36,6 @@ import System.Exit        ( exitFailure, exitSuccess )
 import System.IO
 
 import Text.PrettyPrint
-import Text.Parsec
 
 
 --
@@ -90,35 +87,8 @@ printEvalErr ei fail = case fail of
 
 
 --
--- Terms as Applicative Functors
---
-
-instance Functor Term where
-  fmap = yield . result . result . fmap
-    where
-    yield f (Term ais y) = Term ais (f y)
-    result = (.)
-
-instance Applicative Term where
-  pure v = Term [] (\ _ _ -> return v)
-
-  (Term args f) <*> (Term args' v) = Term (args ++ args') wrapped
-    where
-    wrapped ei cl = f ei cl <*> v ei cl
-
-
---
 -- Standard Options
 --
-
-instance ArgVal HelpFormat where
-  converter = enum [ ( "pager", Pager )
-                   , ( "plain", Plain )
-                   , ( "groff", Groff )
-                   ]
-
-instance ArgVal (Maybe HelpFormat) where
-  converter = just
 
 addStdOpts :: EvalInfo -> ( Yield (Maybe HelpFormat)
                           , Maybe (Yield Bool)
@@ -268,7 +238,7 @@ unwrap = evalBy unwrapTerm
 -- Share code between 'evalChoice' and 'unwrapChoice' with this HOF.
 evalChoiceBy :: ProcessTo a b
              -> [String] -> ( Term a, TermInfo ) -> [( Term a, TermInfo )] -> IO b
-evalChoiceBy method args mainTerm@( term, termInfo ) choices = do
+evalChoiceBy method args mainTerm@( _, termInfo ) choices = do
   ( chosen, args' ) <- either handleErr return =<<
     (runErrorT . fromErr $ chooseTerm termInfo eiChoices args)
 

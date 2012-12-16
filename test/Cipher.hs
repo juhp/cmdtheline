@@ -52,6 +52,7 @@ seek back n xs = seek back (n - 1) (dir xs)
   where
   dir = if back then backward else forward
 
+lowers, uppers :: Cycle Char
 lowers = fromList ['a'..'z']
 uppers = fromList ['A'..'Z']
 
@@ -73,9 +74,13 @@ rot back n mStr = do
 -- Morse
 --
 
+switch :: ( a, b ) -> ( b, a )
 switch ( x, y ) = ( y, x )
 
+fromCode :: [( String, Char )]
 fromCode = map switch toCode
+
+toCode :: [( Char, String )]
 toCode =
   [ ( 'a', ".-"    ), ( 'b', "-..."  ), ( 'c', "-.-."  ), ( 'd', "-.."   )
   , ( 'e', "."     ), ( 'f', "..-."  ), ( 'g', "--."   ), ( 'h', "...."  )
@@ -91,7 +96,6 @@ toCode =
 
 fromMorse, toMorse :: [String] -> Maybe String
 fromMorse    = mapM (`lookup` fromCode)
-
 toMorse strs = sepCat " / " <$> mapM convertLetters strs
   where
   convertLetters chars = sepCat " " <$> mapM (`lookup` toCode) chars
@@ -133,6 +137,7 @@ morse from mStr = do
 --
 
 -- The heading under which to place common options.
+comOpts :: String
 comOpts = "COMMON OPTIONS"
 
 -- A modified default 'TermInfo' to be shared by commands.
@@ -152,6 +157,7 @@ defTI' = defTI
 -- 'input' is a common option. We set its 'optSec' field to 'comOpts' so
 -- that it is placed under that section instead of the default '"OPTIONS"'
 -- section, which we will reserve for command-specific options.
+input :: Term (Maybe String)
 input = value $ opt Nothing (optInfo [ "input", "i" ])
       { optName = "INPUT"
       , optDoc  = "For specifying input on the command line.  If present, "
@@ -159,7 +165,7 @@ input = value $ opt Nothing (optInfo [ "input", "i" ])
       , optSec  = comOpts
       }
 
-
+rotTerm :: ( Term (IO ()), TermInfo )
 rotTerm = ( rot <$> back <*> n <*> input, termInfo )
   where
   back = value $ flag (optInfo [ "back", "b" ])
@@ -182,7 +188,7 @@ rotTerm = ( rot <$> back <*> n <*> input, termInfo )
                  ] ++ man defTI'
     }
 
-
+morseTerm :: ( Term (IO ()), TermInfo )
 morseTerm = ( morse <$> from <*> input, termInfo )
   where
   from = value $ flag (optInfo [ "from", "f" ])
@@ -207,6 +213,7 @@ morseTerm = ( morse <$> from <*> input, termInfo )
     ]
 
 
+defaultTerm :: ( Term a, TermInfo )
 defaultTerm = ( ret $ const (helpFail Pager Nothing) <$> input
               , termInfo
               )

@@ -50,15 +50,14 @@ add t k v = go t k (length k) 0 v (Pre v {- Allocate less. -})
       t' = maybe empty id $ M.lookup (k !! i) (succs t)
 
 findNode :: String -> Trie a -> Maybe (Trie a)
-findNode k t = go t k (length k) 0
+findNode k = go 0
   where
-  go t k len i =
+  len = length k
+
+  go i t =
     if i == len
        then Just t
-       else goNext =<< M.lookup (k !! i) (succs t)
-    where
-    goNext t' = go t' k len (i + 1)
-
+       else go (i + 1) =<< M.lookup (k !! i) (succs t)
 
 lookup :: String -> Trie a -> Either LookupFail a
 lookup k t = case findNode k t of
@@ -94,6 +93,9 @@ ambiguities t pre = case findNode pre t of
         Key _ -> pre' : acc
         Nil   -> error "saw Nil on descent"
         _     -> acc
+
+    -- FIXME: Handle this better.  At least produce a meaningful error message.
+    descend _ = undefined
 
 fromList :: [( String, a )] -> Trie a
 fromList assoc = foldl consume empty assoc

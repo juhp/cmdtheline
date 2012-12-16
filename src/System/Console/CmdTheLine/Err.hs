@@ -8,7 +8,6 @@ import System.Console.CmdTheLine.Common
 import qualified System.Console.CmdTheLine.Help as H
 
 import Text.PrettyPrint
-import Data.List ( intersperse )
 
 import Control.Monad ( join )
 import Control.Monad.Trans.Error
@@ -40,52 +39,74 @@ ret (Term ais yield) = Term ais yield'
 hsepMap :: (a -> Doc) -> [a] -> Doc
 hsepMap f = hsep . map f
 
-errArgv     = text "argv array must have at least one element"
+errArgv :: Doc
+errArgv = text "argv array must have at least one element"
+
+errNotOpt, errNotPos :: String
 errNotOpt   = "Option argument without name"
 errNotPos   = "Positional argument with a name"
+
+errHelp :: Doc -> Doc
 errHelp doc = text "term error, help requested for unknown command" <+> doc
 
 
+alts :: [String] -> Doc
 alts []    = error "alts called on empty list"
-alts [x]   = error "alts called on singleton list"
+alts [_]   = error "alts called on singleton list"
 alts [x,y] = hsepMap text [ "either", x, "or", y ]
 alts xs    = text "one of:" <+> fsep (punctuate (char ',') (map text xs))
 
+invalid :: String -> Doc -> Doc -> Doc
 invalid kind s exp = hsep
   [ text "invalid", text kind, quotes s<>char ',', exp ]
 
+invalidVal :: Doc -> Doc -> Doc
 invalidVal = invalid "value"
 
+no :: String -> String -> Doc
 no kind s = sep [ text "no such", text kind, quotes $ text s ]
 
+notDir :: Doc -> Doc
 notDir  s = quotes (s) <+> text "is not a directory"
 
+isDir :: Doc -> Doc
 isDir   s = quotes (s) <+> text "is a directory"
 
+element :: String -> String -> Doc -> Doc
 element kind str exp = fsep
   [ text "invalid element in", text kind, parens . quotes $ text str, exp ]
 
+sepMiss :: Char -> String -> Doc
 sepMiss sep str = invalidVal (text str) $
   hsep [ text "missing a", quotes $ char sep, text "separator" ]
 
+unknown :: String -> String -> Doc
 unknown kind v = sep [ text "unknown", text kind, quotes $ text v ]
 
+ambiguous :: String -> String -> [String] -> Doc
 ambiguous kind s ambs = hsep
   [ text kind, quotes $ text s, text "ambiguous, could be", alts ambs ]
 
+posExcess :: [Doc] -> Doc
 posExcess excess = text "too many arguments, don't know what to do with"
                <+> hsepMap prep excess
   where
   prep = (<> text ",") . quotes
 
+flagValue :: String -> String -> Doc
 flagValue f v = hsep
   [ text "option", quotes $ text f
   , text "is a flag, it cannot take the argument", quotes $ text v
   ]
 
+optValueMissing :: String -> Doc
 optValueMissing f = hsep
   [ text "option", quotes $ text f, text "needs an argument" ]
+
+optParseValue :: String -> Doc -> Doc
 optParseValue f e = sep [ text "option" <+> (quotes (text f)<>char ':'), e ]
+
+optRepeated :: String -> String -> Doc
 optRepeated f f'
   | f == f' = hsep
     [ text "option", quotes $ text f, text "cannot be repeated" ]
@@ -117,6 +138,7 @@ argMissing ai
     longName (x : xs)
       | length x > 2 || xs == [] = x
       | otherwise                = longName xs
+    longName [] = undefined
 
 print :: Handle -> EvalInfo -> Doc -> IO ()
 print h ei e = hPrint h $ (text . termName . fst $ main ei) <> char ':' <+> e
