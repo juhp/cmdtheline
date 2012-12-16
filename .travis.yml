@@ -1,8 +1,14 @@
 language: haskell
+before_install:
+    # Uncomment whenever hackage is down.
+    - mkdir -p ~/.cabal && cp config ~/.cabal/config && cabal update
+
 install:
-  - cabal update && cabal install
-  - cabal install HUnit
-  - cabal install test-framework
-  - cabal install test-framework-hunit
+    - cabal configure $mode
+    - cabal build
+  #- cabal update && cabal install
+  #- cabal install HUnit
+  #- cabal install test-framework
+  #- cabal install test-framework-hunit
 notifications:
   email: true
