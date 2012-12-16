@@ -10,5 +10,12 @@ install:
   #- cabal install HUnit
   #- cabal install test-framework
   #- cabal install test-framework-hunit
+
+scritp:
+    - $script
+
 notifications:
   email: true
+
+env:
+    - mode="--enable-tests" script="cabal test"
