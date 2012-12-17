@@ -16,12 +16,12 @@ data Value a = Pre a -- Value bound by a prefix key.
              | Key a -- Value bound by an entire key.
              | Amb   -- No Value bound due to ambiguity in the key.
              | Nil   -- Attempt to retrieve a Value from an empty Trie.
-               deriving (Eq)
+               deriving ( Eq )
 
 data Trie a = Trie
   { val   :: Value a
-  , succs :: CMap (Trie a)
-  } deriving (Eq)
+  , nexts :: CMap (Trie a)
+  } deriving ( Eq )
 
 data LookupFail = Ambiguous | NotFound deriving (Show)
 
@@ -31,36 +31,31 @@ empty = Trie Nil M.empty
 isEmpty :: Eq a => Trie a -> Bool
 isEmpty = (== empty)
 
-add :: Trie a -> String -> a -> Trie a
-add t k v = go t k (length k) 0 v (Pre v {- Allocate less. -})
+add :: String -> a -> Trie a -> Trie a
+add k v t = go t k
   where
-  go t k len i v preV =
-    if i == len
-       then Trie (Key v) (succs t)
-       else Trie newVal  newSuccs
+  go t s = case s of
+    []     -> Trie (Key v) next
+    c:rest ->
+      let t'       = maybe empty id $ M.lookup c next
+          newNexts = M.insert c (go t' rest) next 
+      in Trie newVal newNexts
     where
+    next = nexts t
+
     newVal = case val t of
-      Amb       -> Amb
-      Pre _     -> Amb
-      v@(Key _) -> v
-      Nil       -> preV
+      Amb        -> Amb
+      Pre _      -> Amb
+      v'@(Key _) -> v'
+      Nil        -> Pre v
 
-    newSuccs = M.insert (k !! i) (go t' k len (i + 1) v preV) (succs t)
-      where
-      t' = maybe empty id $ M.lookup (k !! i) (succs t)
-
-findNode :: String -> Trie a -> Maybe (Trie a)
-findNode k = go 0
+findNode :: Trie a -> String -> Maybe (Trie a)
+findNode t = foldl' go (Just t)
   where
-  len = length k
-
-  go i t =
-    if i == len
-       then Just t
-       else go (i + 1) =<< M.lookup (k !! i) (succs t)
+  go acc c = M.lookup c . nexts =<< acc
 
 lookup :: String -> Trie a -> Either LookupFail a
-lookup k t = case findNode k t of
+lookup k t = case findNode t k of
   Nothing -> Left NotFound
   Just t' -> case val t' of
     Key v -> Right v
@@ -69,10 +64,10 @@ lookup k t = case findNode k t of
     Nil   -> Left  NotFound
 
 ambiguities :: Trie a -> String -> [String]
-ambiguities t pre = case findNode pre t of
+ambiguities t pre = case findNode t pre of
   Nothing -> []
   Just t' -> case val t' of
-    Amb -> go [] pre $ M.toList (succs t') : []
+    Amb -> go [] pre $ M.toList (nexts t') : []
     _   -> []
 
   where
@@ -86,7 +81,7 @@ ambiguities t pre = case findNode pre t of
       where
       ( c, t'' ) = top
 
-      assocs'    = M.toList (succs t'') : bottom : rest
+      assocs'    = M.toList (nexts t'') : bottom : rest
 
       pre'       = pre ++ return c
       acc'       = case val t'' of
@@ -98,6 +93,6 @@ ambiguities t pre = case findNode pre t of
     descend _ = undefined
 
 fromList :: [( String, a )] -> Trie a
-fromList assoc = foldl consume empty assoc
+fromList assoc = foldl' consume empty assoc
   where
-  consume t ( k, v ) = add t k v
+  consume t ( k, v ) = add k v t

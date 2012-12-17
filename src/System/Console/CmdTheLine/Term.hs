@@ -178,7 +178,7 @@ chooseTerm ti choices args@( arg : rest )
     Left  T.Ambiguous -> throwError . UsageFail $ E.ambiguous com arg ambs
     where
     index = foldl add T.empty choices
-    add acc ( choice, _ ) = T.add acc (termName choice) choice
+    add acc ( choice, _ ) = T.add (termName choice) choice acc
 
     com  = "command"
     ambs = sort $ T.ambiguities index arg

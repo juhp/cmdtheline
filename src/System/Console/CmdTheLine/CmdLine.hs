@@ -52,7 +52,7 @@ argInfoIndexes = foldl go ( T.empty, [], M.empty )
                   , M.insert ai (Opt []) cl
                   )
     where
-    add t name = T.add t name ai
+    add t name = T.add name ai t
 
 parseOptArg :: String -> ( String, Maybe String )
 parseOptArg str
