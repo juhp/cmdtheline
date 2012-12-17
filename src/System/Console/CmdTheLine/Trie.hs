@@ -2,9 +2,14 @@
  - This is open source software distributed under a MIT license.
  - See the file 'LICENSE' for further information.
  -}
-module System.Console.CmdTheLine.Trie where
+module System.Console.CmdTheLine.Trie
+  ( add, lookup, empty, isEmpty, fromList, ambiguities
+  , Trie, LookupFail(..)
+  ) where
 
+import Prelude hiding ( lookup )
 import qualified Data.Map as M
+import Data.List (foldl')
 
 {-
  - This implementation maps any non-ambiguous prefix of a key to its value.

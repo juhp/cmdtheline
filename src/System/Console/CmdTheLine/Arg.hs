@@ -37,7 +37,7 @@ import Control.Monad.Trans.Error ( throwError )
 
 import Text.PrettyPrint
 
-import Data.List     ( sortBy )
+import Data.List     ( sortBy, foldl' )
 import Data.Function ( on )
 
 argFail :: Doc -> Err a
@@ -248,7 +248,7 @@ vFlagAll vs assoc = Arg $ Term (map flag assoc') yield
     | otherwise = ai { repeatable = True }
 
   yield _ cl = do
-    result <- foldl addLookup (return []) assoc'
+    result <- foldl' addLookup (return []) assoc'
     case result of
       [] -> return vs
       _  -> return . map snd $ sortBy (compare `on` fst) result

@@ -2,7 +2,10 @@
  - This is open source software distributed under a MIT license.
  - See the file 'LICENSE' for further information.
  -}
-module System.Console.CmdTheLine.Help where
+module System.Console.CmdTheLine.Help
+  ( printVersion, invocation, prepSynopsis, print ) where
+
+import Prelude hiding ( print )
 
 import System.Console.CmdTheLine.Common
 import qualified System.Console.CmdTheLine.Manpage as Man
@@ -11,10 +14,10 @@ import Control.Applicative
 import Control.Arrow       ( first )
 
 import Data.Char     ( toUpper, toLower )
-import Data.List     ( intersperse, sort, sortBy, partition )
+import Data.List     ( intersperse, sort, sortBy, partition, foldl' )
 import Data.Function ( on )
 
-import System.IO
+import System.IO hiding ( print )
 
 
 invocation :: Char -> EvalInfo -> String
@@ -59,7 +62,7 @@ synopsis ei = case evalKind ei of
   where
   args = concat . intersperse " " $ map snd args'
     where
-    args' = sortBy compare' . foldl formatPos [] . snd $ term ei
+    args' = sortBy compare' . foldl' formatPos [] . snd $ term ei
 
   formatPos acc ai
     | isOpt ai  = acc
@@ -191,21 +194,21 @@ makeCmdItems :: EvalInfo -> [( String, ManBlock )]
 makeCmdItems ei = case evalKind ei of
   Simple -> []
   Choice -> []
-  Main   -> sortBy (descCompare `on` fst) . foldl addCmd [] $ choices ei
+  Main   -> sortBy (descCompare `on` fst) . foldl' addCmd [] $ choices ei
   where
   addCmd acc ( ti, _ ) = ( termSec ti, I (label ti) (termDoc ti) )
                        : acc
   label ti = "$(b," ++ termName ti ++ ")"
 
 mergeOrphans :: ( [( String, ManBlock )], [Maybe ManBlock] ) -> [ManBlock]
-mergeOrphans ( orphans, marked ) = fst $ foldl go ( [], orphans ) marked
+mergeOrphans ( orphans, marked ) = fst $ foldl' go ( [], orphans ) marked
   where
   go ( acc, orphans ) (Just block) = ( block : acc, orphans )
   go ( acc, orphans ) Nothing      = ( acc',        []      )    
     where
     acc' = case orphans of
       []           -> acc
-      ( s, _ ) : _ -> let ( result, s' ) = foldl merge ( acc, s ) orphans
+      ( s, _ ) : _ -> let ( result, s' ) = foldl' merge ( acc, s ) orphans
                       in  S s' : result
 
   merge ( acc, secName ) ( secName', item )
@@ -216,7 +219,7 @@ mergeItems :: [( String, ManBlock )] -> [ManBlock]
            -> ( [( String, ManBlock )], [Maybe ManBlock] )
 mergeItems items blocks = ( orphans, marked )
   where
-  ( marked, _, _, orphans ) = foldl go ( [Nothing], [], False, items ) blocks
+  ( marked, _, _, orphans ) = foldl' go ( [Nothing], [], False, items ) blocks
   
   -- 'toInsert' is a list of manblocks that belong in the current section.
   go ( acc, toInsert, mark, items ) block = case block of

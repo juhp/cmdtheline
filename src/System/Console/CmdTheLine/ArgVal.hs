@@ -25,7 +25,7 @@ import qualified System.Console.CmdTheLine.Trie as T
 
 import Control.Arrow ( first, (***) )
 import Data.Function ( on )
-import Data.List     ( sort, unfoldr )
+import Data.List     ( sort, unfoldr, foldl' )
 import Data.Ratio    ( Ratio )
 import Data.Tuple    ( swap )
 
@@ -61,7 +61,7 @@ digits        = many1 digit
 sign          = option "" $ string "-"
 
 concatParsers :: [Parsec String () String] -> Parsec String () String
-concatParsers = foldl (liftA2 (++)) $ return []
+concatParsers = foldl' (liftA2 (++)) $ return []
 
 pInteger  :: ( Read a, Integral a ) => Parsec String () a
 pFloating :: ( Read a, Floating a ) => Parsec String () a
