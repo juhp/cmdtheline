@@ -7,10 +7,6 @@ install:
     - cabal install test-framework test-framework-hunit
     - cabal configure $mode
     - cabal build
-  #- cabal update && cabal install
-  #- cabal install HUnit
-  #- cabal install test-framework
-  #- cabal install test-framework-hunit
 
 script:
     - $script
