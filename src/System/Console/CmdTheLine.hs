@@ -1,4 +1,4 @@
-{- Copyright © 2012, Vincent Elisha Lee Frey.  All rights reserved.
+{- Copyright Â© 2012, Vincent Elisha Lee Frey.  All rights reserved.
  - This is open source software distributed under a MIT license.
  - See the file 'LICENSE' for further information.
  -}
@@ -31,11 +31,6 @@ import System.Console.CmdTheLine.Arg
 import System.Console.CmdTheLine.ArgVal
 import System.Console.CmdTheLine.Err
 import System.Console.CmdTheLine.Util
-
-import Text.PrettyPrint ( Doc )
-
-import Control.Monad    ( join )
-import Control.Monad.Trans.Error ( throwError )
 
 {-$term
 

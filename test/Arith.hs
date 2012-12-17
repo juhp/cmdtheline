@@ -61,8 +61,10 @@ catParsers = foldl (liftA2 (++)) (return "")
 integer :: Parser Int
 integer = read <$> catParsers [ option "" $ string "-", many1 digit ]
 
+tok :: Parser a -> Parser a
 tok p = p <* spaces
 
+parens :: Parser a -> Parser a
 parens = between op cp
   where
   op = tok $ char '('
@@ -143,6 +145,7 @@ arith pp assoc = maybe badEnv method . beta (M.fromList assoc)
   method = if pp then print . pretty 0 else print . eval
   badEnv = hPutStrLn stderr "arith: bad environment"
 
+arithTerm :: Term (IO ())
 arithTerm = arith <$> pp <*> env <*> e
   where
   pp = value $ flag (optInfo [ "pretty", "p" ])
@@ -161,6 +164,7 @@ arithTerm = arith <$> pp <*> env <*> e
     , posDoc  = "An arithmetic expression to be evaluated."
     }
 
+termInfo :: TermInfo
 termInfo = defTI
   { termName = "arith"
   , version  = "0.3"

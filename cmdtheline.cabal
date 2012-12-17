@@ -49,7 +49,7 @@ Author:        Eli Frey
 Maintainer:    Eli Frey <eli.lee.frey gmail com>
 Stability:     Experimental
 Category:      Console
-Cabal-version: >=1.6
+Cabal-version: >=1.8
 Build-type:    Simple
 
 Extra-source-files: doc/examples/*.hs, README.md
@@ -61,10 +61,10 @@ Source-repository head
 Library
   hs-source-dirs: src
   extensions:     FlexibleInstances
-  build-depends:  base >= 4.5 && < 5, containers >= 0.4 && < 0.5,
+  build-depends:  base >= 4.5 && < 5, containers >= 0.4 && < 0.6,
                   parsec >= 3.1 && < 3.2, pretty >= 1.1 && < 1.2,
                   process >= 1.1, directory >= 1.1,
-                  transformers >= 0.3 && < 0.4, filepath >= 1.3 && < 1.4
+                  transformers >= 0.2 && < 0.4, filepath >= 1.3 && < 1.4
 
   exposed-modules: System.Console.CmdTheLine,
                    System.Console.CmdTheLine.Arg,
@@ -82,12 +82,12 @@ Library
 test-suite Main
   type:          exitcode-stdio-1.0
   build-depends: base >= 4 && < 5, HUnit  >= 1.2.4 && < 2,
-                 test-framework >= 0.6 && < 0.7,
-                 test-framework-hunit >= 0.2 && < 0.3,
+                 test-framework >= 0.6 && < 0.9,
+                 test-framework-hunit >= 0.2 && < 0.4,
                  containers >= 0.4 && < 0.6,
                  parsec >= 3.1 && < 3.2, pretty >= 1.1 && < 1.2,
                  process >= 1.1, directory >= 1.1,
-                 transformers >= 0.3 && < 0.4, filepath >= 1.3 && < 1.4
-  ghc-options:   -Wall -rtsopts
+                 transformers >= 0.2 && < 0.4, filepath >= 1.3 && < 1.4
+  ghc-options:   -Wall -Werror -fno-warn-name-shadowing -rtsopts
   hs-source-dirs: src, test
   main-is:        Main.hs

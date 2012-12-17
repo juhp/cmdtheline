@@ -18,7 +18,6 @@ import Text.PrettyPrint
 
 import System.Console.CmdTheLine.Common
 import System.Console.CmdTheLine.Err
-import System.Console.CmdTheLine.Term
 
 import Control.Monad.IO.Class ( liftIO )
 

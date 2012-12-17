@@ -59,52 +59,50 @@ withInput input action = do
     return v)
 
 unwrapFB, unwrapAr, unwrapCP, unwrapCi :: [String] -> IO (Either EvalExit (IO ()))
-
-unwrapFB args = mute $ unwrap args ( FB.term, FB.termInfo )
-unwrapAr args = mute $ unwrap args ( Ar.arithTerm, Ar.termInfo )
-unwrapCP args = mute $ unwrap args ( CP.term, CP.termInfo )
-unwrapCi args = mute $
-  unwrapChoice args Ci.defaultTerm [ Ci.rotTerm, Ci.morseTerm ]
+unwrapFB args = unwrap args ( FB.term, FB.termInfo )
+unwrapAr args = unwrap args ( Ar.arithTerm, Ar.termInfo )
+unwrapCP args = unwrap args ( CP.term, CP.termInfo )
+unwrapCi args = unwrapChoice args Ci.defaultTerm [ Ci.rotTerm, Ci.morseTerm ]
 
 tests :: [Test]
 tests =
   -- With FizzBuzz we'll test the different forms of option assignment and
   -- flags.
   [ testGroup "FizzBuzz"
-    [ testCase "w/o args" . assert $ isRight <$> unwrapFB []
-    , testCase "w/ good args" . assert $
+    [ testCase " w/o args" . assert $ isRight <$> unwrapFB []
+    , testCase " w/ good args" . assert $
       isRight <$> unwrapFB [ "-q", "-s", "-v"
                            , "-f", "bob", "--buzz", "ann", "-t20"
                            ]
-    , testCase "w/ bad args" . assert $ isLeft <$> unwrapFB [ "-zork" ]
+    , testCase " w/ bad args" . assert $ isLeft <$> unwrapFB [ "-zork" ]
     ]
 
   -- With arith we'll test 'posRight' 'pos' positional argument partitioning.
   , testGroup "arith"
-    [ testCase "w/o args" . assert $ isLeft <$> unwrapAr []
-    , testCase "w/ good args many" . assert $
+    [ testCase " w/o args" . assert $ isLeft <$> unwrapAr []
+    , testCase " w/ good args many" . assert $
       isRight <$> unwrapAr [ "x^2+y*1", "x=2", "y=(11-1)/5" ]
-    , testCase "w/ good args one" . assert $
+    , testCase " w/ good args one" . assert $
       isRight <$> unwrapAr [ "x^2", "x=2" ]
-    , testCase "w/ bad args" . assert $
+    , testCase " w/ bad args" . assert $
       isLeft <$> unwrapAr [ "-pretty", "x^2", "x=2" ]
     ]
 
   -- With cipher we'll test subcommands.
   , testGroup "cipher"
-    [ testCase "w/o args" . assert $ isLeft <$> unwrapCi []
-    , testCase "morse" . assert $
+    [ testCase " w/o args" . assert $ isLeft <$> unwrapCi []
+    , testCase " morse" . assert $
       isRight <$> withInput ["bob"] (unwrapCi [ "morse" ])
-    , testCase "rot" . assert $
+    , testCase " rot" . assert $
       isRight <$> withInput ["bob"] (unwrapCi [ "rot" ])
     ]
 
   -- With cp we'll test 'revPosLeft' 'revPos' positional argument partitioning.
   , testGroup "cp"
-    [ testCase "w/o args" . assert $ isLeft <$> unwrapCP []
-    , testCase "w/ good args many" . assert $
+    [ testCase " w/o args" . assert $ isLeft <$> unwrapCP []
+    , testCase " w/ good args many" . assert $
       isRight <$> unwrapCP [ "-d", "cmdtheline.cabal", "LICENSE", "test" ]
-    , testCase "w/ good args one" . assert $
+    , testCase " w/ good args one" . assert $
       isRight <$> unwrapCP [ "-d", "cmdtheline.cabal", "foo" ]
     ]
   ]

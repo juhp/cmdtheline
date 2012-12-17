@@ -1,4 +1,4 @@
-{- Copyright © 2012, Vincent Elisha Lee Frey.  All rights reserved.
+{- Copyright Â© 2012, Vincent Elisha Lee Frey.  All rights reserved.
  - This is open source software distributed under a MIT license.
  - See the file 'LICENSE' for further information.
  -}
@@ -29,7 +29,6 @@ import System.Console.CmdTheLine.Common  hiding ( Arg )
 import System.Console.CmdTheLine.CmdLine ( optArg, posArg )
 import System.Console.CmdTheLine.ArgVal  ( ArgVal, pp, parser )
 import qualified System.Console.CmdTheLine.Err  as E
-import qualified System.Console.CmdTheLine.Trie as T
 
 import Control.Applicative
 import Control.Arrow       ( second )
@@ -38,7 +37,7 @@ import Control.Monad.Trans.Error ( throwError )
 
 import Text.PrettyPrint
 
-import Data.List     ( sort, sortBy )
+import Data.List     ( sortBy, foldl' )
 import Data.Function ( on )
 
 argFail :: Doc -> Err a
@@ -122,6 +121,7 @@ mkInfo names = ArgInfo
 --
 -- It is considered a programming error to provide an empty list of names to
 -- optInfo.
+optInfo :: [String] -> OptInfo
 optInfo [] =
   error "System.Console.CmdTheLine.Arg.optInfo recieved empty list of names."
 optInfo names = OInf (mkInfo names) "" "" "OPTIONS"
@@ -248,7 +248,7 @@ vFlagAll vs assoc = Arg $ Term (map flag assoc') yield
     | otherwise = ai { repeatable = True }
 
   yield _ cl = do
-    result <- foldl addLookup (return []) assoc'
+    result <- foldl' addLookup (return []) assoc'
     case result of
       [] -> return vs
       _  -> return . map snd $ sortBy (compare `on` fst) result
@@ -422,6 +422,7 @@ revPosRight = posList . PosR True
 -- Arguments as terms.
 --
 
+absent :: [ArgInfo] -> [ArgInfo]
 absent = map (\ ai -> ai { absence = Absent })
 
 -- | 'value' @arg@ makes @arg@ into a 'Term'.
