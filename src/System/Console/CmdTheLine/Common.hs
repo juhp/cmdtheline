@@ -6,6 +6,7 @@ module System.Console.CmdTheLine.Common where
 
 import Data.Function    ( on )
 import Text.PrettyPrint ( Doc, text )
+import Control.Applicative ( Applicative(..) )
 
 import qualified Data.Map as M
 
@@ -129,6 +130,7 @@ data TermInfo = TermInfo
   } deriving ( Eq )
 
 -- | A default 'TermInfo'.
+defTI :: TermInfo
 defTI = TermInfo
   { termName  = ""
   , version   = ""
@@ -167,6 +169,19 @@ type Yield a = EvalInfo -> CmdLine -> Err a
 -- in the context of being computed from the command line arguments.
 data Term a = Term [ArgInfo] (Yield a)
 
+instance Functor Term where
+  fmap = yield . result . result . fmap
+    where
+    yield f (Term ais y) = Term ais (f y)
+    result = (.)
+
+instance Applicative Term where
+  pure v = Term [] (\ _ _ -> return v)
+
+  (Term args f) <*> (Term args' v) = Term (args ++ args') wrapped
+    where
+    wrapped ei cl = f ei cl <*> v ei cl
+
 
 data EvalKind = Simple   -- The program has no commands.
               | Main     -- The default program is running.
@@ -181,6 +196,7 @@ evalKind ei
 descCompare :: Ord a => a -> a -> Ordering
 descCompare = flip compare
 
+splitOn :: Eq a => a -> [a] -> ( [a], [a] )
 splitOn sep xs = ( left, rest' )
   where
   rest' = if rest == [] then rest else tail rest -- Skip the 'sep'.

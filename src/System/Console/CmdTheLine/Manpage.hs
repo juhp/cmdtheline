@@ -19,7 +19,6 @@ import Control.Exception ( handle, throw, IOException, SomeException )
 
 import Data.Maybe ( catMaybes )
 import Data.Char  ( isSpace )
-import Data.List  ( subsequences, words )
 
 import Text.Parsec
 import Text.PrettyPrint hiding ( char )
@@ -27,6 +26,7 @@ import Text.PrettyPrint hiding ( char )
 type Subst = [( String, String )] -- An association list of
                                   -- ( replacing, replacement ) pairs.
 
+paragraphIndent, labelIndent :: Int
 paragraphIndent = 7
 labelIndent     = 4
 
@@ -52,17 +52,11 @@ substitute esc assoc = either (error . show) id . parse subst ""
 
   scan = many $ try (string "\\$") <|> try replace <|> pure <$> anyChar
 
-  replace = do
-    string "$("
-    replacement <- try escape <|> choice replacers <|> safeChars
-    char ')'
-    return replacement
+  replace = string "$(" >> content <* char ')'
+    where
+    content = try escape <|> choice replacers <|> safeChars
 
-  escape = do
-    c <- anyChar
-    char ','
-    str <- try replace <|> safeChars
-    return $ esc c str
+  escape = esc <$> (anyChar <* char ',') <*> try replace <|> safeChars
 
   safeChars = many1 $ satisfy (/= ')')
 

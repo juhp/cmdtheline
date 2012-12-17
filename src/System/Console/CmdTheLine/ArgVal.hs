@@ -19,13 +19,13 @@ module System.Console.CmdTheLine.ArgVal
   , pair, triple, quadruple, quintuple
   ) where
 
-import System.Console.CmdTheLine.Common ( splitOn, select )
+import System.Console.CmdTheLine.Common ( splitOn, select, HelpFormat(..) )
 import qualified System.Console.CmdTheLine.Err as E
 import qualified System.Console.CmdTheLine.Trie as T
 
 import Control.Arrow ( first, (***) )
 import Data.Function ( on )
-import Data.List     ( sort, unfoldr )
+import Data.List     ( sort, unfoldr, foldl' )
 import Data.Ratio    ( Ratio )
 import Data.Tuple    ( swap )
 
@@ -55,10 +55,13 @@ parser = fst converter
 pp     :: ArgVal a => ArgPrinter a
 pp = snd converter
 
+decPoint, digits, sign :: Parsec String () String
 decPoint      = string "."
 digits        = many1 digit
-concatParsers = foldl (liftA2 (++)) $ return []
 sign          = option "" $ string "-"
+
+concatParsers :: [Parsec String () String] -> Parsec String () String
+concatParsers = foldl' (liftA2 (++)) $ return []
 
 pInteger  :: ( Read a, Integral a ) => Parsec String () a
 pFloating :: ( Read a, Floating a ) => Parsec String () a
@@ -224,6 +227,7 @@ quintuple sep = ( parser', pp' )
     split []  = Nothing
     split str = Just $ splitOn sep str
 
+invalidVal :: String -> String -> Doc
 invalidVal = E.invalidVal `on` text
 
 instance ArgVal Bool where
@@ -292,4 +296,13 @@ instance ArgVal (Ratio Integer) where
         invalidVal str "expected a ratio in the form '<numerator> % <denominator>'"
 
 instance ArgVal (Maybe (Ratio Integer)) where
+  converter = just
+
+instance ArgVal HelpFormat where
+  converter = enum [ ( "pager", Pager )
+                   , ( "plain", Plain )
+                   , ( "groff", Groff )
+                   ]
+
+instance ArgVal (Maybe HelpFormat) where
   converter = just

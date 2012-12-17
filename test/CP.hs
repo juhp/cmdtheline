@@ -13,6 +13,7 @@ import System.FilePath  ( takeFileName
 import System.IO
 import System.Exit ( exitFailure )
 
+sep :: String
 sep = [pathSeparator]
 
 cp :: Bool -> [String] -> String -> IO ()
@@ -47,6 +48,7 @@ cp dry sources dest =
 
 -- An example of using the 'rev' and 'Left' variants of 'pos', as well as
 -- validating file paths.
+term :: Term (IO ())
 term = cp <$> dry <*> filesExist sources <*> validPath dest
   where
   dry = value $ flag (optInfo [ "dry", "d" ])
@@ -66,6 +68,7 @@ term = cp <$> dry <*> filesExist sources <*> validPath dest
                    ++ "is more than one $(i,SOURCE)."
           }
 
+termInfo :: TermInfo
 termInfo = defTI
   { termName = "cp"
   , version  = "v1.0"

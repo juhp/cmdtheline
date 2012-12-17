@@ -2,20 +2,22 @@
  - This is open source software distributed under a MIT license.
  - See the file 'LICENSE' for further information.
  -}
-module System.Console.CmdTheLine.Help where
+module System.Console.CmdTheLine.Help
+  ( printVersion, invocation, prepSynopsis, print ) where
+
+import Prelude hiding ( print )
 
 import System.Console.CmdTheLine.Common
 import qualified System.Console.CmdTheLine.Manpage as Man
 
 import Control.Applicative
-import Control.Arrow       ( first, second )
+import Control.Arrow       ( first )
 
 import Data.Char     ( toUpper, toLower )
-import Data.List     ( intersperse, sort, sortBy, partition )
+import Data.List     ( intersperse, sort, sortBy, partition, foldl' )
 import Data.Function ( on )
-import Data.Maybe    ( catMaybes )
 
-import System.IO
+import System.IO hiding ( print )
 
 
 invocation :: Char -> EvalInfo -> String
@@ -60,7 +62,7 @@ synopsis ei = case evalKind ei of
   where
   args = concat . intersperse " " $ map snd args'
     where
-    args' = sortBy revCmp . foldl formatPos [] . snd $ term ei
+    args' = sortBy compare' . foldl' formatPos [] . snd $ term ei
 
   formatPos acc ai
     | isOpt ai  = acc
@@ -78,38 +80,40 @@ synopsis ei = case evalKind ei of
       PosN _ _ -> ""
       _        -> "..."
 
-  revCmp ( p, _ ) ( p', _ ) = case ( p', p ) of
-    ( _,             PosAny    ) -> LT
-    ( PosAny,        _         ) -> GT
-    ( PosL  _     _, PosR  _ _ ) -> LT
-    ( PosR  _     _, PosL  _ _ ) -> GT
-    ( p, p' ) -> bifurcate
+  compare' ( p, _ ) ( p', _ ) = case ( p', p ) of
+    ( _,          PosAny    ) -> LT
+    ( PosAny,     _         ) -> GT
+    ( PosL  _  _, PosR  _ _ ) -> LT
+    ( PosR  _  _, PosL  _ _ ) -> GT
+    _ -> comparePos k k'
     where
-    bifurcate
-      | not (getBool p) && not (getBool p') = case ( p, p' ) of
-        ( PosL _ _,  PosN _ _ ) -> if k <= k' then LT else GT
-        ( PosN _ _,  PosL _ _ ) -> if k >= k' then GT else LT
-        ( PosN _ _,  _        ) -> if k <= k' then LT else GT
-        _                       -> if k >= k' then GT else LT
-
+    comparePos
       | getBool p && getBool p' = case ( p, p' ) of
-        ( PosL _ _,  PosN _ _ ) -> if k >= k' then LT else GT
-        ( PosN _ _,  PosL _ _ ) -> if k <= k' then GT else LT
-        ( PosN _ _,  _        ) -> if k >= k' then LT else GT
-        _                       -> if k <= k' then GT else LT
-      where
-      k  = getPos p
-      k' = getPos p'
+        ( PosL _ _, PosN _ _ ) -> flip compare -- if k >= k' then LT else GT
+        ( PosN _ _, PosL _ _ ) -> compare -- if k <= k' then GT else LT
+        ( PosN _ _, _        ) -> flip compare -- if k >= k' then LT else GT
+        _                      -> compare -- if k <= k' then GT else LT
+
+      | otherwise = case ( p, p' ) of
+        ( PosL _ _, PosN _ _ ) -> compare -- if k <= k' then LT else GT
+        ( PosN _ _, PosL _ _ ) -> flip compare -- if k >= k' then GT else LT
+        ( PosN _ _, _        ) -> compare -- if k <= k' then LT else GT
+        _                      -> flip compare -- if k >= k' then GT else LT
+
+    k  = getPos p
+    k' = getPos p'
 
     getPos x = case x of
       PosL  _ pos -> pos
       PosR  _ pos -> pos
       PosN  _ pos -> pos
+      _ -> undefined
 
     getBool x = case x of
       PosL  b _ -> b
       PosR  b _ -> b
       PosN  b _ -> b
+      _ -> undefined
 
 synopsisSection :: EvalInfo -> [ManBlock]
 synopsisSection ei = [ S "SYNOPSIS", P (synopsis ei) ]
@@ -190,21 +194,21 @@ makeCmdItems :: EvalInfo -> [( String, ManBlock )]
 makeCmdItems ei = case evalKind ei of
   Simple -> []
   Choice -> []
-  Main   -> sortBy (descCompare `on` fst) . foldl addCmd [] $ choices ei
+  Main   -> sortBy (descCompare `on` fst) . foldl' addCmd [] $ choices ei
   where
   addCmd acc ( ti, _ ) = ( termSec ti, I (label ti) (termDoc ti) )
                        : acc
   label ti = "$(b," ++ termName ti ++ ")"
 
 mergeOrphans :: ( [( String, ManBlock )], [Maybe ManBlock] ) -> [ManBlock]
-mergeOrphans ( orphans, marked ) = fst $ foldl go ( [], orphans ) marked
+mergeOrphans ( orphans, marked ) = fst $ foldl' go ( [], orphans ) marked
   where
   go ( acc, orphans ) (Just block) = ( block : acc, orphans )
   go ( acc, orphans ) Nothing      = ( acc',        []      )    
     where
     acc' = case orphans of
       []           -> acc
-      ( s, _ ) : _ -> let ( result, s' ) = foldl merge ( acc, s ) orphans
+      ( s, _ ) : _ -> let ( result, s' ) = foldl' merge ( acc, s ) orphans
                       in  S s' : result
 
   merge ( acc, secName ) ( secName', item )
@@ -215,7 +219,7 @@ mergeItems :: [( String, ManBlock )] -> [ManBlock]
            -> ( [( String, ManBlock )], [Maybe ManBlock] )
 mergeItems items blocks = ( orphans, marked )
   where
-  ( marked, _, _, orphans ) = foldl go ( [Nothing], [], False, items ) blocks
+  ( marked, _, _, orphans ) = foldl' go ( [Nothing], [], False, items ) blocks
   
   -- 'toInsert' is a list of manblocks that belong in the current section.
   go ( acc, toInsert, mark, items ) block = case block of
@@ -227,6 +231,7 @@ mergeItems items blocks = ( orphans, marked )
       ( toInsert', is' ) = first (map snd) $ partition ((== str) . fst) items
       acc'               = Just sec : marked
       mark'              = str == "DESCRIPTION"
+    transition _ = undefined
 
     marked = if mark then Nothing : acc' else acc'
       where
@@ -240,6 +245,7 @@ text ei = mergeOrphans . mergeItems items . man . fst $ term ei
   cmp   = descCompare `on` fst
   items = sortBy cmp $ cmds ++ args
 
+eiSubst :: EvalInfo -> [( String, String )]
 eiSubst ei =
   [ ( "tname", termName . fst $ term ei )
   , ( "mname", termName . fst $ main ei )

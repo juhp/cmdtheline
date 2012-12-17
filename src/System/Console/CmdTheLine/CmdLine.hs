@@ -19,9 +19,7 @@ import Text.Parsec as P
 import qualified System.Console.CmdTheLine.Trie as T
 import qualified Data.Map as M
 
-import Data.List     ( sort )
-import Data.Function ( on )
-
+import Data.List ( sort, foldl' )
 
 optArg :: CmdLine -> ArgInfo -> [( Int, String, Maybe String )]
 optArg cl ai = case M.lookup ai cl of
@@ -42,19 +40,19 @@ posArg cl ai = case M.lookup ai cl of
  - ArgInfo to an empty list of Arg.
  -}
 argInfoIndexes :: [ArgInfo] -> ( T.Trie ArgInfo, [ArgInfo], CmdLine )
-argInfoIndexes = foldl go ( T.empty, [], M.empty )
+argInfoIndexes = foldl' go ( T.empty, [], M.empty )
   where
   go ( optTrie, posAis, cl ) ai
     | isPos ai  = ( optTrie
                   , ai : posAis
                   , M.insert ai (Pos []) cl
                   )
-    | otherwise = ( foldl add optTrie $ optNames ai
+    | otherwise = ( foldl' add optTrie $ optNames ai
                   , posAis
                   , M.insert ai (Opt []) cl
                   )
     where
-    add t name = T.add t name ai
+    add t name = T.add name ai t
 
 parseOptArg :: String -> ( String, Maybe String )
 parseOptArg str
@@ -133,7 +131,7 @@ processPosArgs posInfo ( cl, args )
   last   = length args - 1
   excess = E.posExcess . map text $ takeEnd (last - maxSpec) args
 
-  ( cl', maxSpec ) = foldl go ( cl, -1 ) posInfo
+  ( cl', maxSpec ) = foldl' go ( cl, -1 ) posInfo
 
   takeEnd n = reverse . take n . reverse
 
