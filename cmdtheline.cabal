@@ -97,3 +97,10 @@ test-suite Main
   ghc-options:   -Wall -Werror -fno-warn-name-shadowing -rtsopts
   hs-source-dirs: src, test
   main-is:        Main.hs
+  other-modules:  Arith,
+                  Cipher,
+                  CP,
+                  Fail,
+                  FizzBuzz,
+                  Grep,
+                  Hello
