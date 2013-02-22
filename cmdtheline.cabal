@@ -1,5 +1,5 @@
 Name: cmdtheline
-Version: 0.2.1
+Version: 0.2.2
 Synopsis: Declarative command-line option parsing and documentation library.
 Description:
   CmdTheLine aims to remove tedium from the definition of command-line
@@ -41,6 +41,11 @@ Description:
     now two new functions exported with System.Console.CmdTheLine.Term, 'unwrap'
     and 'unwrapChoice'.  As well a datatype representing cause of early exit,
     'EvalExit' is exported.
+  .
+  Changes since 0.2.1
+  .
+  * Added adapter for interfacing with Getopt in module
+    'System.Console.CmdTheLine'.
 
 Homepage:      http://github.com/eli-frey/cmdtheline
 License:       MIT

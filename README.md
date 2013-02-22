@@ -40,6 +40,11 @@ Bug fixes and aditions that don't break compatibility with master.
 ###0.3
 The next release candidate.
 
+Contributors
+------------
+
+Bas Van Dijk -- GetOpt adapter
+
 LICENSE
 -------
 MIT - See file 'LICENSE' for details.
