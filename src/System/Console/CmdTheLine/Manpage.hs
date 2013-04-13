@@ -56,7 +56,7 @@ substitute esc assoc = either (error . show) id . parse subst ""
     where
     content = try escape <|> choice replacers <|> safeChars
 
-  escape = esc <$> (anyChar <* char ',') <*> try replace <|> safeChars
+  escape = esc <$> (anyChar <* char ',') <*> (try replace <|> safeChars)
 
   safeChars = many1 $ satisfy (/= ')')
 

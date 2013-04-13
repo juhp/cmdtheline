@@ -16,6 +16,7 @@ import System.Directory ( getTemporaryDirectory )
 import System.FilePath  ( (</>) )
 
 import System.Console.CmdTheLine ( unwrap, unwrapChoice, EvalExit )
+import System.Console.CmdTheLine.Manpage ( substitute, plainEsc )
 
 import Control.Applicative ( (<$>) )
 
@@ -104,6 +105,11 @@ tests =
       isRight <$> unwrapCP [ "-d", "cmdtheline.cabal", "LICENSE", "test" ]
     , testCase " w/ good args one" . assert $
       isRight <$> unwrapCP [ "-d", "cmdtheline.cabal", "foo" ]
+    ]
+
+  , testGroup "unittests"
+    [ testCase " escaping $(i,...)" . assert $ substitute plainEsc [] "$(i,foo)" == "foo"
+    , testCase " escaping $(b,...)" . assert $ substitute plainEsc [] "$(b,foo)" == "foo"
     ]
   ]
 
